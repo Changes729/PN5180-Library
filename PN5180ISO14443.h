@@ -26,7 +26,7 @@ class PN5180ISO14443 : public PN5180 {
 
 public:
   PN5180ISO14443(uint8_t SSpin, uint8_t BUSYpin, uint8_t RSTpin, SPIClass& spi=SPI);
-  
+
 private:
   uint16_t rxBytesReceived();
   uint32_t GetNumberOfBytesReceivedAndValidBits();
@@ -39,10 +39,10 @@ public:
   /*
    * Helper functions
    */
-public:   
+public:
   bool setupRF();
-  int8_t readCardSerial(uint8_t *buffer);    
-  bool isCardPresent();    
+  int8_t readCardSerial(uint8_t *buffer);
+  bool isCardPresent();
 };
 
 #endif /* PN5180ISO14443_H */

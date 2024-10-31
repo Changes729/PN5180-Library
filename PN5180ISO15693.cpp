@@ -22,7 +22,7 @@
 #include "PN5180ISO15693.h"
 #include "Debug.h"
 
-PN5180ISO15693::PN5180ISO15693(uint8_t SSpin, uint8_t BUSYpin, uint8_t RSTpin, SPIClass& spi) 
+PN5180ISO15693::PN5180ISO15693(uint8_t SSpin, uint8_t BUSYpin, uint8_t RSTpin, SPIClass& spi)
               : PN5180(SSpin, BUSYpin, RSTpin, spi) {
 }
 
@@ -41,9 +41,9 @@ ISO15693ErrorCode PN5180ISO15693::getInventory(uint8_t *uid) {
   PN5180DEBUG(F("Get Inventory...\n"));
 
   for (int i=0; i<8; i++) {
-    uid[i] = 0;  
+    uid[i] = 0;
   }
-  
+
   uint8_t *readBuffer;
   ISO15693ErrorCode rc = issueISO15693Command(inventory, sizeof(inventory), &readBuffer);
   if (ISO15693_EC_OK != rc) {
@@ -55,7 +55,7 @@ ISO15693ErrorCode PN5180ISO15693::getInventory(uint8_t *uid) {
   PN5180DEBUG(F(", Data Storage Format ID: "));
   PN5180DEBUG(formatHex(readBuffer[1]));
   PN5180DEBUG(F(", UID: "));
-  
+
   for (int i=0; i<8; i++) {
     uid[i] = readBuffer[2+i];
 #ifdef DEBUG
@@ -63,7 +63,7 @@ ISO15693ErrorCode PN5180ISO15693::getInventory(uint8_t *uid) {
     if (i<2) PN5180DEBUG(":");
 #endif
   }
-  
+
   PN5180DEBUG_PRINTLN();
 
   return ISO15693_EC_OK;
@@ -107,7 +107,7 @@ ISO15693ErrorCode PN5180ISO15693::inventoryPoll(uint8_t *uid, uint8_t maxTags, u
   PN5180DEBUG_PRINTF("PN5180ISO15693::inventoryPoll(maxTags=%d, numCard=%d, numCol=%d)", maxTags, *numCard, *numCol);
   PN5180DEBUG_PRINTLN();
   PN5180DEBUG_ENTER;
-  
+
   uint8_t maskLen = 0;
   if(*numCol > 0){
     uint32_t mask = collision[0];
@@ -115,7 +115,7 @@ ISO15693ErrorCode PN5180ISO15693::inventoryPoll(uint8_t *uid, uint8_t maxTags, u
       mask >>= 4L;
       maskLen++;
     }while(mask > 0);
-  } 
+  }
   uint8_t *p = (uint8_t*)&(collision[0]);
   //                      Flags,  CMD,
   const uint8_t inventory[7] = { 0x06, 0x01, uint8_t(maskLen*4), p[0], p[1], p[2], p[3] };
@@ -128,7 +128,7 @@ ISO15693ErrorCode PN5180ISO15693::inventoryPoll(uint8_t *uid, uint8_t maxTags, u
 #endif
   clearIRQStatus(0x000FFFFF);                                      // 3. Clear all IRQ_STATUS flags
   sendData(inventory, cmdLen, 0);                                  // 4. 5. 6. Idle/StopCom Command, Transceive Command, Inventory command
-  
+
   for(uint8_t slot=0; slot<16; slot++){                                // 7. Loop to check 16 time slots for data
     uint32_t rxStatus;
     uint32_t irqStatus = getIRQStatus();
@@ -190,7 +190,7 @@ ISO15693ErrorCode PN5180ISO15693::inventoryPoll(uint8_t *uid, uint8_t maxTags, u
       PN5180DEBUG_PRINTLN();
 #endif
     }
-    
+
     if(slot+1 < 16){ // If we have more cards to poll for...
       writeRegisterWithAndMask(TX_CONFIG, 0xFFFFFB3F);             // 11. Next SEND_DATA will only include EOF
       clearIRQStatus(0x000FFFFF);                                  // 14. Clear all IRQ_STATUS flags
@@ -256,13 +256,13 @@ ISO15693ErrorCode PN5180ISO15693::readSingleBlock(const uint8_t *uid, uint8_t bl
   }
 
   PN5180DEBUG("Value=");
-  
+
   for (int i=0; i<blockSize; i++) {
     blockData[i] = resultPtr[1+i];
-#ifdef DEBUG    
+#ifdef DEBUG
     PN5180DEBUG(formatHex(blockData[i]));
     PN5180DEBUG(" ");
-#endif    
+#endif
   }
 
 #ifdef DEBUG
@@ -384,16 +384,16 @@ ISO15693ErrorCode PN5180ISO15693::readMultipleBlock(const uint8_t *uid, uint8_t 
     PN5180DEBUG("Starting block exceeds length of data");
     return ISO15693_EC_BLOCK_NOT_AVAILABLE;
   }
-  if( (blockNo + numBlock) > numBlock ){ // Will attempt to read a block greater than the num blocks on the VICC 
+  if( (blockNo + numBlock) > numBlock ){ // Will attempt to read a block greater than the num blocks on the VICC
     PN5180DEBUG("End of block exceeds length of data");
     return ISO15693_EC_BLOCK_NOT_AVAILABLE;
   }
-  
-  //                              flags, cmd, uid,             1stBlock blocksToRead  
+
+  //                              flags, cmd, uid,             1stBlock blocksToRead
   uint8_t readMultipleCmd[12] = { 0x22, 0x23, 1,2,3,4,5,6,7,8, blockNo, uint8_t(numBlock-1) }; // UID has LSB first!
   //                                |\- high data rate
   //                                \-- no options, addressed by UID
-  
+
   for (int i=0; i<8; i++) {
     readMultipleCmd[2+i] = uid[i];
   }
@@ -417,10 +417,10 @@ ISO15693ErrorCode PN5180ISO15693::readMultipleBlock(const uint8_t *uid, uint8_t 
   PN5180DEBUG("readMultipleBlock: Value=");
   for (int i=0; i<numBlock * blockSize; i++) {
     blockData[i] = resultPtr[1+i];
-#ifdef DEBUG    
+#ifdef DEBUG
     PN5180DEBUG(formatHex(blockData[i]));
     PN5180DEBUG(" ");
-#endif 
+#endif
   }
 
 #ifdef DEBUG
@@ -508,7 +508,7 @@ ISO15693ErrorCode PN5180ISO15693::getSystemInfo(uint8_t *uid, uint8_t *blockSize
   for (int i=0; i<8; i++) {
     uid[i] = readBuffer[2+i];
   }
-  
+
 #ifdef DEBUG
   PN5180DEBUG("UID=");
   for (int i=0; i<8; i++) {
@@ -517,7 +517,7 @@ ISO15693ErrorCode PN5180ISO15693::getSystemInfo(uint8_t *uid, uint8_t *blockSize
   }
   PN5180DEBUG_PRINTLN();
 #endif
-  
+
   uint8_t *p = &readBuffer[10];
 
   uint8_t infoFlags = readBuffer[1];
@@ -528,9 +528,9 @@ ISO15693ErrorCode PN5180ISO15693::getSystemInfo(uint8_t *uid, uint8_t *blockSize
     PN5180DEBUG_PRINTLN();
   }
 #ifdef DEBUG
-  else PN5180DEBUG(F("No DSFID\n"));  
+  else PN5180DEBUG(F("No DSFID\n"));
 #endif
-  
+
   if (infoFlags & 0x02) { // AFI flag
     uint8_t afi = *p++;
     PN5180DEBUG(F("AFI="));  // Application family identifier
@@ -577,7 +577,7 @@ ISO15693ErrorCode PN5180ISO15693::getSystemInfo(uint8_t *uid, uint8_t *blockSize
 #ifdef DEBUG
   else PN5180DEBUG(F("No VICC memory size\n"));
 #endif
-   
+
   if (infoFlags & 0x08) { // IC reference
 	uint8_t __attribute__((unused)) iRef = *p++;
     PN5180DEBUG("IC Ref=");
@@ -595,8 +595,8 @@ ISO15693ErrorCode PN5180ISO15693::getSystemInfo(uint8_t *uid, uint8_t *blockSize
 // ICODE SLIX specific commands
 
 /*
- * The GET RANDOM NUMBER command is required to receive a random number from the label IC. 
- * The passwords that will be transmitted with the SET PASSWORD,ENABLEPRIVACY and DESTROY commands 
+ * The GET RANDOM NUMBER command is required to receive a random number from the label IC.
+ * The passwords that will be transmitted with the SET PASSWORD,ENABLEPRIVACY and DESTROY commands
  * have to be calculated with the password and the random number (see Section 9.5.3.2 "SET PASSWORD")
  */
 ISO15693ErrorCode PN5180ISO15693::getRandomNumber(uint8_t *randomData) {
@@ -611,8 +611,8 @@ ISO15693ErrorCode PN5180ISO15693::getRandomNumber(uint8_t *randomData) {
 }
 
 /*
- * The SET PASSWORD command enables the different passwords to be transmitted to the label 
- * to access the different protected functionalities of the following commands. 
+ * The SET PASSWORD command enables the different passwords to be transmitted to the label
+ * to access the different protected functionalities of the following commands.
  * The SET PASSWORD command has to be executed just once for the related passwords if the label is powered
  */
 ISO15693ErrorCode PN5180ISO15693::setPassword(uint8_t identifier, const uint8_t *password, const uint8_t *random) {
@@ -650,13 +650,13 @@ ISO15693ErrorCode PN5180ISO15693::disablePrivacyMode(const uint8_t *password) {
   if (rc != ISO15693_EC_OK) {
     return rc;
   }
-  
-  // set password to disable privacy mode 
+
+  // set password to disable privacy mode
   rc = setPassword(0x04, password, data);
-  return rc; 
+  return rc;
 }
 
-// enable privacy mode for ICODE SLIX2 tag with given password 
+// enable privacy mode for ICODE SLIX2 tag with given password
 ISO15693ErrorCode PN5180ISO15693::enablePrivacyMode(const uint8_t *password) {
   // get a random number from the tag
   uint8_t data[]= {0x00, 0x00};
@@ -664,10 +664,10 @@ ISO15693ErrorCode PN5180ISO15693::enablePrivacyMode(const uint8_t *password) {
   if (rc != ISO15693_EC_OK) {
     return rc;
   }
-  
+
   // enable privacy command to lock the tag
   rc = enablePrivacy(password, data);
-  return rc; 
+  return rc;
 }
 
 
@@ -740,7 +740,7 @@ ISO15693ErrorCode PN5180ISO15693::issueISO15693Command(const uint8_t *cmd, uint8
     PN5180DEBUG("Didnt detect RX_SOF_DET_IRQ_STAT after sendData");
 	  return EC_NO_CARD;
   }
-  
+
   unsigned long startedWaiting = millis();
   while(!(irqR & RX_IRQ_STAT)) {
     irqR = getIRQStatus();
@@ -749,15 +749,15 @@ ISO15693ErrorCode PN5180ISO15693::issueISO15693Command(const uint8_t *cmd, uint8
       return EC_NO_CARD;
     }
   }
-  
+
   uint32_t rxStatus;
   readRegister(RX_STATUS, &rxStatus);
-  
+
   PN5180DEBUG(F("RX-Status="));
   PN5180DEBUG(formatHex(rxStatus));
 
   uint16_t len = (uint16_t)(rxStatus & 0x000001ff);
-  
+
   PN5180DEBUG(", len=");
   PN5180DEBUG(len);
   PN5180DEBUG_PRINTLN();
@@ -767,7 +767,7 @@ ISO15693ErrorCode PN5180ISO15693::issueISO15693Command(const uint8_t *cmd, uint8
     PN5180DEBUG(F("*** ERROR in readData!\n"));
     return ISO15693_EC_UNKNOWN_ERROR;
   }
-  
+
 #ifdef DEBUG
   Serial.print("Read=");
   for (int i=0; i<len; i++) {
@@ -787,7 +787,7 @@ ISO15693ErrorCode PN5180ISO15693::issueISO15693Command(const uint8_t *cmd, uint8
   uint8_t responseFlags = (*resultPtr)[0];
   if (responseFlags & (1<<0)) { // error flag
     uint8_t errorCode = (*resultPtr)[1];
-    
+
     PN5180DEBUG("ERROR code=");
     PN5180DEBUG(formatHex(errorCode));
     PN5180DEBUG(" - ");
@@ -833,7 +833,7 @@ const char *PN5180ISO15693::strerror(ISO15693ErrorCode code) {
   PN5180DEBUG(("ISO15693ErrorCode="));
   PN5180DEBUG(code);
   PN5180DEBUG_PRINTLN();
-  
+
   switch (code) {
     case EC_NO_CARD: return ("No card detected!");
     case ISO15693_EC_OK: return ("OK!");

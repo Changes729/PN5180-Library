@@ -40,7 +40,7 @@ class PN5180ISO15693 : public PN5180 {
 
 public:
   PN5180ISO15693(uint8_t SSpin, uint8_t BUSYpin, uint8_t RSTpin, SPIClass& spi=SPI);
-  
+
 private:
   ISO15693ErrorCode issueISO15693Command(const uint8_t *cmd, uint8_t cmdLen, uint8_t **resultPtr);
   ISO15693ErrorCode inventoryPoll(uint8_t *uid, uint8_t maxTags, uint8_t *numCard, uint8_t *numCol, uint16_t *collision);
@@ -53,7 +53,7 @@ public:
   ISO15693ErrorCode readMultipleBlock(const uint8_t *uid, uint8_t blockNo, uint8_t numBlock, uint8_t *blockData, uint8_t blockSize);
 
   ISO15693ErrorCode getSystemInfo(uint8_t *uid, uint8_t *blockSize, uint8_t *numBlocks);
-   
+
   // ICODE SLIX2 specific commands, see https://www.nxp.com/docs/en/data-sheet/SL2S2602.pdf
   ISO15693ErrorCode getRandomNumber(uint8_t *randomData);
   ISO15693ErrorCode setPassword(uint8_t identifier, const uint8_t *password, const uint8_t *random);
@@ -64,10 +64,10 @@ public:
   /*
    * Helper functions
    */
-public:   
+public:
   bool setupRF();
   const char *strerror(ISO15693ErrorCode code);
-    
+
 };
 
 #endif /* PN5180ISO15693_H */

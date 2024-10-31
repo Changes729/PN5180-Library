@@ -23,14 +23,14 @@
 #include <PN5180.h>
 #include "Debug.h"
 
-PN5180ISO14443::PN5180ISO14443(uint8_t SSpin, uint8_t BUSYpin, uint8_t RSTpin, SPIClass& spi) 
+PN5180ISO14443::PN5180ISO14443(uint8_t SSpin, uint8_t BUSYpin, uint8_t RSTpin, SPIClass& spi)
               : PN5180(SSpin, BUSYpin, RSTpin, spi) {
 }
 
 bool PN5180ISO14443::setupRF() {
   PN5180DEBUG_PRINTLN(F("Loading RF-Configuration..."));
   PN5180DEBUG_ENTER;
-  
+
   if (loadRFConfig(0x00, 0x80)) {  // ISO14443 parameters
     PN5180DEBUG_PRINTLN(F("done."));
   }
@@ -46,16 +46,16 @@ bool PN5180ISO14443::setupRF() {
     PN5180DEBUG_EXIT;
     return false;
   }
-  
+
   PN5180DEBUG_EXIT;
   return true;
 }
 
 
 uint16_t PN5180ISO14443::rxBytesReceived() {
-	PN5180DEBUG_PRINTLN(F("PN5180ISO14443::rxBytesReceived()"));	
+	PN5180DEBUG_PRINTLN(F("PN5180ISO14443::rxBytesReceived()"));
 	PN5180DEBUG_ENTER;
-	
+
 	uint32_t rxStatus;
 	uint16_t len = 0;
 
@@ -88,7 +88,7 @@ uint16_t PN5180ISO14443::rxBytesReceived() {
 int8_t PN5180ISO14443::activateTypeA(uint8_t *buffer, uint8_t kind) {
 	uint8_t cmd[7];
 	uint8_t uidLength = 0;
-	
+
 	PN5180DEBUG_PRINTF(F("PN5180ISO14443::activateTypeA(*buffer, kind=%d)"), kind);
 	PN5180DEBUG_PRINTLN();
 	PN5180DEBUG_ENTER;
@@ -104,7 +104,7 @@ int8_t PN5180ISO14443::activateTypeA(uint8_t *buffer, uint8_t kind) {
 	setRF_on();
 	// wait RF-field to ramp-up
 	delay(10);
-	
+
 	// OFF Crypto
 	if (!writeRegisterWithAndMask(SYSTEM_CONFIG, 0xFFFFFFBF)) {
 		PN5180DEBUG_PRINTLN(F("*** ERROR: OFF Crypto failed!"));
@@ -124,20 +124,20 @@ int8_t PN5180ISO14443::activateTypeA(uint8_t *buffer, uint8_t kind) {
 		return -1;
 	}
 
-	// set the PN5180 into IDLE state  
+	// set the PN5180 into IDLE state
 	if (!writeRegisterWithAndMask(SYSTEM_CONFIG, 0xFFFFFFF8)) {
 		PN5180DEBUG_PRINTLN(F("*** ERROR: set IDLE state failed!"));
 		PN5180DEBUG_EXIT;
 		return -1;
 	}
-		
-	// activate TRANSCEIVE routine  
+
+	// activate TRANSCEIVE routine
 	if (!writeRegisterWithOrMask(SYSTEM_CONFIG, 0x00000003)) {
 		PN5180DEBUG_PRINTLN(F("*** ERROR: Activates TRANSCEIVE routine failed!"));
 		PN5180DEBUG_EXIT;
 		return -1;
 	}
-	
+
 	// wait for wait-transmit state
 	PN5180TransceiveStat transceiveState = getTransceiveState();
 	if (PN5180_TS_WaitTransmit != transceiveState) {
@@ -145,15 +145,15 @@ int8_t PN5180ISO14443::activateTypeA(uint8_t *buffer, uint8_t kind) {
 		PN5180DEBUG_EXIT;
 		return -1;
 	}
-	
+
 /*	uint8_t irqConfig = 0b0000000; // Set IRQ active low + clear IRQ-register
     writeEEprom(IRQ_PIN_CONFIG, &irqConfig, 1);
     // enable only RX_IRQ_STAT, TX_IRQ_STAT and general error IRQ
-    writeRegister(IRQ_ENABLE, RX_IRQ_STAT | TX_IRQ_STAT | GENERAL_ERROR_IRQ_STAT);  
+    writeRegister(IRQ_ENABLE, RX_IRQ_STAT | TX_IRQ_STAT | GENERAL_ERROR_IRQ_STAT);
 */
 
 	// clear all IRQs
-	clearIRQStatus(0xffffffff); 
+	clearIRQStatus(0xffffffff);
 
 	//Send REQA/WUPA, 7 bits in last byte
 	cmd[0] = (kind == 0) ? 0x26 : 0x52;
@@ -162,7 +162,7 @@ int8_t PN5180ISO14443::activateTypeA(uint8_t *buffer, uint8_t kind) {
 		PN5180DEBUG_EXIT;
 		return 0;
 	}
-	
+
 	// wait some mSecs for end of RF receiption
 	delay(10);
 
@@ -172,24 +172,24 @@ int8_t PN5180ISO14443::activateTypeA(uint8_t *buffer, uint8_t kind) {
 		PN5180DEBUG_EXIT;
 		return 0;
 	}
-	
-	// 
+
+	//
 	unsigned long startedWaiting = millis();
     PN5180DEBUG_PRINTLN(F("wait for PN5180_TS_WaitTransmit (max 200ms)"));
     PN5180DEBUG_OFF;
-	while (PN5180_TS_WaitTransmit != getTransceiveState()) {   
+	while (PN5180_TS_WaitTransmit != getTransceiveState()) {
 		if (millis() - startedWaiting > 200) {
 			PN5180DEBUG_ON;
 			PN5180DEBUG_PRINTLN(F("*** ERROR: timeout in PN5180_TS_WaitTransmit!"));
 			PN5180DEBUG_EXIT;
-			return -1; 
-		}	
+			return -1;
+		}
 	}
     PN5180DEBUG_ON;
-	
+
 	// clear all IRQs
-	clearIRQStatus(0xffffffff); 
-	
+	clearIRQStatus(0xffffffff);
+
 	// send Anti collision 1, 8 bits in last byte
 	cmd[0] = 0x93;
 	cmd[1] = 0x20;
@@ -198,7 +198,7 @@ int8_t PN5180ISO14443::activateTypeA(uint8_t *buffer, uint8_t kind) {
 		PN5180DEBUG_EXIT;
 		return -2;
 	}
-	
+
 	// wait some mSecs for end of RF receiption
 	delay(5);
 
@@ -217,7 +217,7 @@ int8_t PN5180ISO14443::activateTypeA(uint8_t *buffer, uint8_t kind) {
 	// We do have a card now! enable CRC and send anticollision
 	// save the first 4 bytes of UID
 	for (int i = 0; i < 4; i++) buffer[i] = cmd[2 + i];
-	
+
 	//Enable RX CRC calculation
 	if (!writeRegisterWithOrMask(CRC_RX_CONFIG, 0x01)) {
 		PN5180DEBUG_EXIT;
@@ -292,7 +292,7 @@ int8_t PN5180ISO14443::activateTypeA(uint8_t *buffer, uint8_t kind) {
 			PN5180DEBUG_EXIT;
 			return -2;
 		}
-		//Send Select anti collision 2 
+		//Send Select anti collision 2
 		cmd[0] = 0x95;
 		cmd[1] = 0x70;
 		if (!sendData(cmd, 7, 0x00)) {
@@ -359,14 +359,14 @@ bool PN5180ISO14443::mifareHalt() {
 	//mifare Halt
 	cmd[0] = 0x50;
 	cmd[1] = 0x00;
-	sendData(cmd, 2, 0x00);	
+	sendData(cmd, 2, 0x00);
 	return true;
 }
 
 int8_t PN5180ISO14443::readCardSerial(uint8_t *buffer) {
 	PN5180DEBUG_PRINTLN(F("PN5180ISO14443::readCardSerial(*buffer)"));
 	PN5180DEBUG_ENTER;
-  
+
 	// Always return 10 bytes
     // Offset 0..1 is ATQA
     // Offset 2 is SAK.
@@ -375,7 +375,7 @@ int8_t PN5180ISO14443::readCardSerial(uint8_t *buffer) {
 	// try to activate Type A until response or timeout
     uint8_t response[10] = { 0 };
 	int8_t uidLength = activateTypeA(response, 0);
-	
+
 	if (uidLength <= 0){
 	  PN5180DEBUG_EXIT;
 	  return uidLength;
@@ -387,11 +387,11 @@ int8_t PN5180ISO14443::readCardSerial(uint8_t *buffer) {
 	}
 	if ((response[0] == 0xFF) && (response[1] == 0xFF))
 	  uidLength = 0;
-		
+
 	// first UID byte should not be 0x00 or 0xFF
-	if ((response[3] == 0x00) || (response[3] == 0xFF)) 
+	if ((response[3] == 0x00) || (response[3] == 0xFF))
 		uidLength = 0;
-		
+
 	// check for valid uid, skip first byte (0x04)
 	// 0x04 0x00 0xFF 0x00 => invalid uid
 	bool validUID = false;
@@ -435,10 +435,9 @@ bool PN5180ISO14443::isCardPresent() {
 	PN5180DEBUG_ENTER;
 
     uint8_t buffer[10];
-	
+
 	bool ret = (readCardSerial(buffer) >=4);
 
 	PN5180DEBUG_EXIT;
 	return ret;
 }
-
